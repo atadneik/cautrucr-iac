@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Visualization - District 1, HCMC</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2>Loading Map Data...</h2>
+            <p>Fetching road network from District 1</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    <span class="gradient-text">Graph Visualization</span>
+                    <span class="subtitle">District 1 (Quận 1), TP.HCM</span>
+                </h1>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Nodes</span>
+                        <span class="stat-value" id="node-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Edges</span>
+                        <span class="stat-value" id="edge-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Status</span>
+                        <span class="stat-value status-indicator" id="status">Ready</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Graph Canvas -->
+            <div class="panel map-panel">
+                <div class="panel-header">
+                    <h3>Graph Canvas</h3>
+                    <div class="map-controls">
+                        <button class="btn btn-sm btn-primary" id="load-map-btn" title="Load 12 sample nodes">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            Load Map
+                        </button>
+                        <button class="btn btn-sm btn-success" id="empty-canvas-btn" title="Start with empty canvas">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            New Graph
+                        </button>
+                        <button class="btn btn-sm" id="clear-map-btn" title="Clear all nodes and edges">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div id="map" class="map-container"></div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #fbbf24;"></span>
+                        <span>Node</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: var(--edge-color);"></span>
+                        <span>Edge (Auto-connected)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: var(--highlight-color);"></span>
+                        <span>Selected/Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Controls -->
+            <div class="panel control-panel">
+                <div class="panel-header">
+                    <h3>Algorithm Controls</h3>
+                </div>
+
+                <div class="control-sections">
+                    <!-- Node Selection -->
+                    <div class="control-section">
+                        <h4>Node Selection</h4>
+                        <div class="control-group">
+                            <label for="start-node">Start Node:</label>
+                            <select id="start-node" class="select-input">
+                                <option value="">Select start node...</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="end-node">End Node (for shortest path):</label>
+                            <select id="end-node" class="select-input">
+                                <option value="">Select end node...</option>
+                            </select>
+                        </div>
+                        <p class="hint">💡 Click "New Graph" then click anywhere on map to create nodes. Select nodes to
+                            run algorithms.</p>
+                    </div>
+
+                    <!-- Graph Traversal -->
+                    <div class="control-section">
+                        <h4>Graph Traversal</h4>
+                        <div class="button-grid">
+                            <button class="btn btn-primary" id="bfs-btn" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <circle cx="12" cy="12" r="6"></circle>
+                                    <circle cx="12" cy="12" r="2"></circle>
+                                </svg>
+                                BFS Traversal
+                            </button>
+                            <button class="btn btn-primary" id="dfs-btn" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                                DFS Traversal
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Shortest Path -->
+                    <div class="control-section">
+                        <h4>Shortest Path</h4>
+                        <button class="btn btn-primary btn-full" id="shortest-path-btn" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                            Find Shortest Path
+                        </button>
+                        <div id="path-result" class="result-box" style="display: none;"></div>
+                    </div>
+
+                    <!-- Bipartite Check -->
+                    <div class="control-section">
+                        <h4>Graph Properties</h4>
+                        <button class="btn btn-secondary btn-full" id="bipartite-btn" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="18" cy="5" r="3"></circle>
+                                <circle cx="6" cy="9" r="3"></circle>
+                                <circle cx="18" cy="19" r="3"></circle>
+                                <line x1="8.59" y1="10.41" x2="15.42" y2="6.59"></line>
+                                <line x1="8.59" y1="7.59" x2="15.42" y2="17.41"></line>
+                            </svg>
+                            Check Bipartite
+                        </button>
+                        <div id="bipartite-result" class="result-box" style="display: none;"></div>
+                    </div>
+
+                    <!-- Graph Representations -->
+                    <div class="control-section">
+                        <h4>Graph Representations</h4>
+                        <div class="control-group">
+                            <label for="representation-format">View as:</label>
+                            <select id="representation-format" class="select-input">
+                                <option value="">Select format...</option>
+                                <option value="adjacency_matrix">Adjacency Matrix</option>
+                                <option value="adjacency_list">Adjacency List</option>
+                                <option value="edge_list">Edge List</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-full" id="convert-btn" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="17 1 21 5 17 9"></polyline>
+                                <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                <polyline points="7 23 3 19 7 15"></polyline>
+                                <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                            </svg>
+                            Convert & Display
+                        </button>
+                    </div>
+
+                    <!-- Save/Load -->
+                    <div class="control-section">
+                        <h4>Save & Load</h4>
+                        <div class="control-group">
+                            <label for="graph-name">Graph Name:</label>
+                            <input type="text" id="graph-name" class="text-input" placeholder="Enter name...">
+                        </div>
+                        <div class="button-grid">
+                            <button class="btn btn-success" id="save-btn" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                    <polyline points="7 3 7 8 15 8"></polyline>
+                                </svg>
+                                Save
+                            </button>
+                            <button class="btn btn-success" id="load-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Load
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Animation Controls -->
+                    <div class="control-section">
+                        <h4>Animation</h4>
+                        <div class="control-group">
+                            <label for="animation-speed">Speed: <span id="speed-value">500ms</span></label>
+                            <input type="range" id="animation-speed" min="100" max="2000" value="500" step="100"
+                                class="slider">
+                        </div>
+                        <button class="btn btn-warning btn-full" id="pause-btn" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="6" y="4" width="4" height="16"></rect>
+                                <rect x="14" y="4" width="4" height="16"></rect>
+                            </svg>
+                            Pause Animation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel - Results -->
+        <div class="panel results-panel">
+            <div class="panel-header">
+                <h3>Results & Visualization</h3>
+                <button class="btn btn-sm" id="clear-results-btn">Clear</button>
+            </div>
+            <div id="results-content" class="results-content">
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                    <p>No results yet. Run an algorithm to see visualizations and details here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Save/Load -->
+    <div id="modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Saved Graphs</h3>
+                <button class="modal-close" id="modal-close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="app.js"></script>
+</body>
+
+</html>
