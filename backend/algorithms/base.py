@@ -95,8 +95,8 @@ class GraphAlgorithms(
             self.graph_data: Lưu trữ dữ liệu gốc
             self.G: Đồ thị NetworkX để chạy thuật toán
         """
-        # TODO: Triển khai khởi tạo
-        pass
+        self.graph_data = graph_data
+        self.G = self._build_networkx_graph()
     
     def _build_networkx_graph(self) -> nx.Graph:
         """Chuyển đổi GraphData sang đồ thị NetworkX
@@ -110,5 +110,27 @@ class GraphAlgorithms(
         Trả về:
             nx.Graph hoặc nx.DiGraph
         """
-        # TODO: Triển khai chuyển đổi đồ thị
-        pass
+        # BƯỚC 1: Chọn loại đồ thị
+        if self.graph_data.directed:
+            G = nx.DiGraph()   # Đồ thị có hướng
+        else:
+            G = nx.Graph()     # Đồ thị vô hướng
+        
+        # BƯỚC 2: Thêm các đỉnh với thuộc tính
+        for node in self.graph_data.nodes:
+            G.add_node(
+                node.id,           # ID đỉnh (bắt buộc)
+                lat=node.lat,      # Vĩ độ (cho bản đồ)
+                lon=node.lon,      # Kinh độ (cho bản đồ)
+                label=node.label   # Nhãn hiển thị
+            )
+        
+        # BƯỚC 3: Thêm các cạnh với trọng số
+        for edge in self.graph_data.edges:
+            G.add_edge(
+                edge.source,       # Đỉnh nguồn
+                edge.target,       # Đỉnh đích
+                weight=edge.weight # Trọng số (khoảng cách, chi phí...)
+            )
+        
+        return G
